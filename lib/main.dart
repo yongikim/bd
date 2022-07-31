@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'home_app_bar.dart';
-
 void main() {
   runApp(const MyApp());
 }
@@ -92,63 +90,32 @@ class _MyHomePageState extends State<MyHomePage>
         body: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            SafeArea(
-              top: true,
-              bottom: true,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 50),
-                child: CustomScrollView(
-                  slivers: [
-                    const _RowHeader(title: 'Recurring'),
-                    SliverGrid.count(
-                      crossAxisCount: 2,
-                      children: [
-                        Container(color: Colors.red),
-                        Container(color: Colors.blue),
-                        Container(color: Colors.blue),
-                        Container(color: Colors.red),
-                      ],
-                    ),
-                    const _RowHeader(title: 'Temporary'),
-                    SliverGrid.count(
-                      crossAxisCount: 2,
-                      children: [
-                        Container(color: Colors.red),
-                        Container(color: Colors.blue),
-                        Container(color: Colors.blue),
-                        Container(color: Colors.red),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: const <Widget>[
-                      Expanded(child: Text('Recurring')),
-                      Expanded(child: Icon(Icons.add)),
-                    ],
-                  ),
-                )
-              ],
-            ),
-            Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: const <Widget>[
-                      Expanded(child: Text('Recurring')),
-                      Expanded(child: Icon(Icons.add)),
-                    ],
-                  ),
-                )
-              ],
-            ),
+            HomeTabView(month: _month - 2),
+            HomeTabView(month: _month - 1),
+            HomeTabView(month: _month),
           ],
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(
+          top: 8,
+          left: 16,
+          right: 16,
+          bottom: 32,
+        ),
+        child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: const Icon(
+              Icons.add,
+              size: 28,
+            )),
       ),
     );
   }
@@ -167,20 +134,148 @@ class _RowHeader extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: 8.0,
+          horizontal: 16.0,
           vertical: 4.0,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 20.0),
+            ),
             TextButton(
               onPressed: () {},
-              child: const Text('確認用'),
+              child: const Text('See All'),
             )
           ],
         ),
       ),
+    );
+  }
+}
+
+class HomeTabView extends StatefulWidget {
+  const HomeTabView({Key? key, required this.month}) : super(key: key);
+
+  final int month;
+
+  @override
+  State<HomeTabView> createState() => _HomeTabViewState();
+}
+
+class _HomeTabViewState extends State<HomeTabView>
+    with AutomaticKeepAliveClientMixin<HomeTabView> {
+  @override
+  bool get wantKeepAlive => true;
+
+  late Future<int> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = getMonth();
+  }
+
+  Future<int> getMonth() async {
+    await Future.delayed(const Duration(seconds: 3));
+    return widget.month;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return FutureBuilder(
+      future: _future,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          return SafeArea(
+            top: true,
+            bottom: true,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 50,
+              ),
+              child: CustomScrollView(
+                slivers: [
+                  const _RowHeader(title: '\u{1f3E0} Recurring'),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 180,
+                      child: CustomScrollView(
+                        scrollDirection: Axis.horizontal,
+                        slivers: [
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (BuildContext context, int index) {
+                                return SizedBox(
+                                  height: 180,
+                                  width: index == 0 || index == 4 ? 188 : 180,
+                                  child: Card(
+                                    clipBehavior: Clip.antiAlias,
+                                    margin: EdgeInsetsDirectional.only(
+                                        top: 8,
+                                        bottom: 8,
+                                        start: index == 0 ? 16 : 8,
+                                        end: index == 4 ? 16 : 8),
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                  ),
+                                );
+                              },
+                              childCount: 5,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                  const _RowHeader(title: '\u{1f3ce} Temporary'),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 180,
+                      child: CustomScrollView(
+                        scrollDirection: Axis.horizontal,
+                        slivers: [
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (BuildContext context, int index) {
+                                return SizedBox(
+                                  height: 180,
+                                  width: index == 0 || index == 4 ? 188 : 180,
+                                  child: Card(
+                                    clipBehavior: Clip.antiAlias,
+                                    margin: EdgeInsetsDirectional.only(
+                                        top: 8,
+                                        bottom: 8,
+                                        start: index == 0 ? 16 : 8,
+                                        end: index == 4 ? 16 : 8),
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                  ),
+                                );
+                              },
+                              childCount: 5,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 }
