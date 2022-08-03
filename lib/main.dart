@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,7 +8,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -33,6 +33,8 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _month = DateTime.now().month;
+  String _newRecordName = '';
+  int _newRecordAmount = 0;
 
   @override
   void initState() {
@@ -59,6 +61,170 @@ class _MyHomePageState extends State<MyHomePage>
         }
       }
     });
+  }
+
+  void _handleNewRecordNameChange(String input) {
+    setState(() {
+      _newRecordName = input;
+    });
+  }
+
+  void _handleNewRecordAmountChange(String input) {
+    int? amount = int.tryParse(input);
+    if (amount == null) {}
+
+    setState(() {
+      _newRecordAmount = amount!;
+    });
+  }
+
+  void _showNewRecordModal() {
+    showModalBottomSheet<void>(
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          margin: const EdgeInsets.only(top: 64),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 48,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Icon(
+                        Icons.done,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  enabled: true,
+                  autofocus: true,
+                  onChanged: _handleNewRecordNameChange,
+                  decoration: const InputDecoration(hintText: 'Name'),
+                ),
+              ),
+              SizedBox(
+                height: 48,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(children: [
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: const Center(child: Text('スタバ')),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: const Center(child: Text('スタバ')),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: const Center(child: Text('スタバ')),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  enabled: true,
+                  autofocus: false,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  onChanged: _handleNewRecordAmountChange,
+                  decoration: const InputDecoration(hintText: 'Amount'),
+                ),
+              ),
+              SizedBox(
+                height: 48,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(children: [
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: Center(child: Text(500.toString())),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: Center(child: Text(500.toString())),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        child: Center(child: Text(500.toString())),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -104,51 +270,18 @@ class _MyHomePageState extends State<MyHomePage>
           bottom: 32,
         ),
         child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
+          onPressed: _showNewRecordModal,
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
-            child: const Icon(
-              Icons.add,
-              size: 28,
-            )),
-      ),
-    );
-  }
-}
-
-class _RowHeader extends StatelessWidget {
-  const _RowHeader({
-    Key? key,
-    required this.title,
-  }) : super(key: key);
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16.0,
-          vertical: 4.0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 20.0),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('See All'),
-            )
-          ],
+          ),
+          child: const Icon(
+            Icons.add,
+            size: 28,
+          ),
         ),
       ),
     );
@@ -170,11 +303,15 @@ class _HomeTabViewState extends State<HomeTabView>
   bool get wantKeepAlive => true;
 
   late Future<int> _future;
+  late bool _seeAllRecurring;
+  late bool _seeAllTemporary;
 
   @override
   void initState() {
     super.initState();
     _future = getMonth();
+    _seeAllRecurring = false;
+    _seeAllTemporary = false;
   }
 
   Future<int> getMonth() async {
@@ -198,74 +335,186 @@ class _HomeTabViewState extends State<HomeTabView>
               ),
               child: CustomScrollView(
                 slivers: [
-                  const _RowHeader(title: '\u{1f3E0} Recurring'),
                   SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 180,
-                      child: CustomScrollView(
-                        scrollDirection: Axis.horizontal,
-                        slivers: [
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext context, int index) {
-                                return SizedBox(
-                                  height: 180,
-                                  width: index == 0 || index == 4 ? 188 : 180,
-                                  child: Card(
-                                    clipBehavior: Clip.antiAlias,
-                                    margin: EdgeInsetsDirectional.only(
-                                        top: 8,
-                                        bottom: 8,
-                                        start: index == 0 ? 16 : 8,
-                                        end: index == 4 ? 16 : 8),
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 4.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '\u{1f3E0} Recurring',
+                            style: TextStyle(fontSize: 20.0),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _seeAllRecurring = !_seeAllRecurring;
+                              });
+                            },
+                            child: _seeAllRecurring
+                                ? const Text('See Less')
+                                : const Text('See All'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _seeAllRecurring
+                      ? SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2),
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) {
+                              return SizedBox(
+                                height: 180,
+                                width: 188,
+                                child: Card(
+                                  clipBehavior: Clip.antiAlias,
+                                  margin: EdgeInsetsDirectional.only(
+                                    top: 8,
+                                    bottom: 8,
+                                    start: index % 2 == 0 ? 16 : 8,
+                                    end: index % 2 == 0 ? 8 : 16,
                                   ),
-                                );
-                              },
-                              childCount: 5,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                              );
+                            },
+                            childCount: 5,
+                          ),
+                        )
+                      : SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 180,
+                            child: CustomScrollView(
+                              scrollDirection: Axis.horizontal,
+                              slivers: [
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (BuildContext context, int index) {
+                                      return SizedBox(
+                                        height: 180,
+                                        width: index == 0 || index == 4
+                                            ? 188
+                                            : 180,
+                                        child: Card(
+                                          clipBehavior: Clip.antiAlias,
+                                          margin: EdgeInsetsDirectional.only(
+                                              top: 8,
+                                              bottom: 8,
+                                              start: index == 0 ? 16 : 8,
+                                              end: index == 4 ? 16 : 8),
+                                          elevation: 4,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(24),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    childCount: 5,
+                                  ),
+                                )
+                              ],
                             ),
+                          ),
+                        ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 4.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '\u{1f3ce} Temporary',
+                            style: TextStyle(fontSize: 20.0),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _seeAllTemporary = !_seeAllTemporary;
+                              });
+                            },
+                            child: const Text('See All'),
                           )
                         ],
                       ),
                     ),
                   ),
-                  const _RowHeader(title: '\u{1f3ce} Temporary'),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 180,
-                      child: CustomScrollView(
-                        scrollDirection: Axis.horizontal,
-                        slivers: [
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext context, int index) {
-                                return SizedBox(
-                                  height: 180,
-                                  width: index == 0 || index == 4 ? 188 : 180,
-                                  child: Card(
-                                    clipBehavior: Clip.antiAlias,
-                                    margin: EdgeInsetsDirectional.only(
-                                        top: 8,
-                                        bottom: 8,
-                                        start: index == 0 ? 16 : 8,
-                                        end: index == 4 ? 16 : 8),
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
+                  _seeAllTemporary
+                      ? SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2),
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) {
+                              return SizedBox(
+                                height: 180,
+                                width: 188,
+                                child: Card(
+                                  clipBehavior: Clip.antiAlias,
+                                  margin: EdgeInsetsDirectional.only(
+                                    top: 8,
+                                    bottom: 8,
+                                    start: index % 2 == 0 ? 16 : 8,
+                                    end: index % 2 == 0 ? 8 : 16,
                                   ),
-                                );
-                              },
-                              childCount: 5,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                              );
+                            },
+                            childCount: 5,
+                          ),
+                        )
+                      : SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 180,
+                            child: CustomScrollView(
+                              scrollDirection: Axis.horizontal,
+                              slivers: [
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (BuildContext context, int index) {
+                                      return SizedBox(
+                                        height: 180,
+                                        width: index == 0 || index == 4
+                                            ? 188
+                                            : 180,
+                                        child: Card(
+                                          clipBehavior: Clip.antiAlias,
+                                          margin: EdgeInsetsDirectional.only(
+                                              top: 8,
+                                              bottom: 8,
+                                              start: index == 0 ? 16 : 8,
+                                              end: index == 4 ? 16 : 8),
+                                          elevation: 4,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(24),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    childCount: 5,
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
+                          ),
+                        )
                 ],
               ),
             ),
