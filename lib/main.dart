@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'home_tab_view.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -31,7 +33,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
+  late List<int> _monthsThisYear;
   late TabController _tabController;
+  int _year = DateTime.now().year;
   int _month = DateTime.now().month;
   String _newRecordName = '';
   int _newRecordAmount = 0;
@@ -40,10 +44,12 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
 
+    _monthsThisYear = _getMonthsThisYear();
+
     _tabController = TabController(
       vsync: this,
-      length: 3,
-      initialIndex: 2,
+      length: _monthsThisYear.length,
+      initialIndex: _monthsThisYear.length - 1,
     );
 
     _tabController.addListener(() {
@@ -61,6 +67,11 @@ class _MyHomePageState extends State<MyHomePage>
         }
       }
     });
+  }
+
+  List<int> _getMonthsThisYear() {
+    List<int> months = List.generate(_month, (index) => index + 1);
+    return months;
   }
 
   void _handleNewRecordNameChange(String input) {
@@ -255,11 +266,13 @@ class _MyHomePageState extends State<MyHomePage>
         },
         body: TabBarView(
           controller: _tabController,
-          children: <Widget>[
-            HomeTabView(month: _month - 2),
-            HomeTabView(month: _month - 1),
-            HomeTabView(month: _month),
-          ],
+          children: List.generate(
+            _monthsThisYear.length,
+            (index) => HomeTabView(
+              year: _year,
+              month: _monthsThisYear[index],
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -284,247 +297,6 @@ class _MyHomePageState extends State<MyHomePage>
           ),
         ),
       ),
-    );
-  }
-}
-
-class HomeTabView extends StatefulWidget {
-  const HomeTabView({Key? key, required this.month}) : super(key: key);
-
-  final int month;
-
-  @override
-  State<HomeTabView> createState() => _HomeTabViewState();
-}
-
-class _HomeTabViewState extends State<HomeTabView>
-    with AutomaticKeepAliveClientMixin<HomeTabView> {
-  @override
-  bool get wantKeepAlive => true;
-
-  late Future<int> _future;
-  late bool _seeAllRecurring;
-  late bool _seeAllTemporary;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = getMonth();
-    _seeAllRecurring = false;
-    _seeAllTemporary = false;
-  }
-
-  Future<int> getMonth() async {
-    await Future.delayed(const Duration(seconds: 3));
-    return widget.month;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder(
-      future: _future,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          return SafeArea(
-            top: true,
-            bottom: true,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 50,
-              ),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 4.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '\u{1f3E0} Recurring',
-                            style: TextStyle(fontSize: 20.0),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _seeAllRecurring = !_seeAllRecurring;
-                              });
-                            },
-                            child: _seeAllRecurring
-                                ? const Text('See Less')
-                                : const Text('See All'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  _seeAllRecurring
-                      ? SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2),
-                          delegate: SliverChildBuilderDelegate(
-                            (BuildContext context, int index) {
-                              return SizedBox(
-                                height: 180,
-                                width: 188,
-                                child: Card(
-                                  clipBehavior: Clip.antiAlias,
-                                  margin: EdgeInsetsDirectional.only(
-                                    top: 8,
-                                    bottom: 8,
-                                    start: index % 2 == 0 ? 16 : 8,
-                                    end: index % 2 == 0 ? 8 : 16,
-                                  ),
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                ),
-                              );
-                            },
-                            childCount: 5,
-                          ),
-                        )
-                      : SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: 180,
-                            child: CustomScrollView(
-                              scrollDirection: Axis.horizontal,
-                              slivers: [
-                                SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (BuildContext context, int index) {
-                                      return SizedBox(
-                                        height: 180,
-                                        width: index == 0 || index == 4
-                                            ? 188
-                                            : 180,
-                                        child: Card(
-                                          clipBehavior: Clip.antiAlias,
-                                          margin: EdgeInsetsDirectional.only(
-                                              top: 8,
-                                              bottom: 8,
-                                              start: index == 0 ? 16 : 8,
-                                              end: index == 4 ? 16 : 8),
-                                          elevation: 4,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    childCount: 5,
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 4.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '\u{1f3ce} Temporary',
-                            style: TextStyle(fontSize: 20.0),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _seeAllTemporary = !_seeAllTemporary;
-                              });
-                            },
-                            child: const Text('See All'),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  _seeAllTemporary
-                      ? SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2),
-                          delegate: SliverChildBuilderDelegate(
-                            (BuildContext context, int index) {
-                              return SizedBox(
-                                height: 180,
-                                width: 188,
-                                child: Card(
-                                  clipBehavior: Clip.antiAlias,
-                                  margin: EdgeInsetsDirectional.only(
-                                    top: 8,
-                                    bottom: 8,
-                                    start: index % 2 == 0 ? 16 : 8,
-                                    end: index % 2 == 0 ? 8 : 16,
-                                  ),
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                ),
-                              );
-                            },
-                            childCount: 5,
-                          ),
-                        )
-                      : SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: 180,
-                            child: CustomScrollView(
-                              scrollDirection: Axis.horizontal,
-                              slivers: [
-                                SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (BuildContext context, int index) {
-                                      return SizedBox(
-                                        height: 180,
-                                        width: index == 0 || index == 4
-                                            ? 188
-                                            : 180,
-                                        child: Card(
-                                          clipBehavior: Clip.antiAlias,
-                                          margin: EdgeInsetsDirectional.only(
-                                              top: 8,
-                                              bottom: 8,
-                                              start: index == 0 ? 16 : 8,
-                                              end: index == 4 ? 16 : 8),
-                                          elevation: 4,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    childCount: 5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                ],
-              ),
-            ),
-          );
-        } else {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-      },
     );
   }
 }
