@@ -35,10 +35,14 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late List<int> _monthsThisYear;
   late TabController _tabController;
+  final _nameFieldController = TextEditingController();
+  final _amountFieldController = TextEditingController();
+  List<int> _candidateAmounts = [];
   int _year = DateTime.now().year;
   int _month = DateTime.now().month;
   String _newRecordName = '';
   int _newRecordAmount = 0;
+  FocusNode _amountFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -89,6 +93,48 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
+  // TODO: Get from Real Database
+  Future<List<String>> _getCandidateNames() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return ['スタバ', 'タリーズ', 'ドトール'];
+  }
+
+  Future<void> _handleCandidateNameClick(String name) async {
+    // FIXME: 名前候補を再選択したとき金額候補の変更を反映するために一度フォーカスを外す
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    // 名前の設定
+    setState(() {
+      _newRecordName = name;
+    });
+    _nameFieldController.text = name;
+
+    // 金額候補の取得
+    Future.delayed(const Duration(milliseconds: 300)).then((value) {
+      setState(() {
+        if (name == 'スタバ') {
+          _candidateAmounts = [100, 200, 300];
+        } else if (name == 'タリーズ') {
+          _candidateAmounts = [10, 20, 30];
+        } else if (name == 'ドトール') {
+          _candidateAmounts = [1000, 2000, 3000];
+        }
+      });
+      // 金額フォームにフォーカスを当てる
+      _amountFocusNode.requestFocus();
+    });
+  }
+
+  Future<void> _handleCandidateAmountClick(int amount) async {
+    // 金額の設定
+    setState(() {
+      _newRecordAmount = amount;
+    });
+    _amountFieldController.text = amount.toString();
+    // 金額フォームにフォーカスを当てる
+    // _amountFocusNode.requestFocus();
+  }
+
   void _showNewRecordModal() {
     showModalBottomSheet<void>(
       backgroundColor: Colors.transparent,
@@ -106,6 +152,7 @@ class _MyHomePageState extends State<MyHomePage>
           ),
           child: Column(
             children: [
+              // 完了ボタン
               SizedBox(
                 height: 48,
                 child: Row(
@@ -121,62 +168,61 @@ class _MyHomePageState extends State<MyHomePage>
                   ],
                 ),
               ),
+              // 名前フォーム
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
+                  controller: _nameFieldController,
                   enabled: true,
                   autofocus: true,
                   onChanged: _handleNewRecordNameChange,
                   decoration: const InputDecoration(hintText: 'Name'),
                 ),
               ),
+              // 名前候補
               SizedBox(
                 height: 48,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(children: [
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
-                          ),
-                        ),
-                        child: const Center(child: Text('スタバ')),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
-                          ),
-                        ),
-                        child: const Center(child: Text('スタバ')),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
-                          ),
-                        ),
-                        child: const Center(child: Text('スタバ')),
-                      ),
-                    ),
-                  ]),
+                  child: FutureBuilder(
+                    future: _getCandidateNames(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<List<String>> snapshot) {
+                      if (snapshot.hasData) {
+                        return Row(
+                          children: snapshot.data!
+                              .map(
+                                (name) => Card(
+                                  elevation: 2,
+                                  child: TextButton(
+                                    onPressed: () async {
+                                      await _handleCandidateNameClick(name);
+                                    },
+                                    child: Text(
+                                      name,
+                                      style: const TextStyle(
+                                          color: Colors.black54),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      } else {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                    },
+                  ),
                 ),
               ),
+              // 金額フォーム
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
+                  controller: _amountFieldController,
+                  focusNode: _amountFocusNode,
                   enabled: true,
                   autofocus: false,
                   keyboardType: TextInputType.number,
@@ -187,54 +233,43 @@ class _MyHomePageState extends State<MyHomePage>
                   decoration: const InputDecoration(hintText: 'Amount'),
                 ),
               ),
+              // 金額候補
               SizedBox(
                 height: 48,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(children: [
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
+                  child: Row(
+                    children: _candidateAmounts
+                        .map(
+                          (amount) => Card(
+                            elevation: 2,
+                            child: TextButton(
+                              onPressed: () async {
+                                await _handleCandidateAmountClick(amount);
+                              },
+                              child: Text(
+                                amount.toString(),
+                                style: const TextStyle(color: Colors.black54),
+                              ),
+                            ),
                           ),
-                        ),
-                        child: Center(child: Text(500.toString())),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
-                          ),
-                        ),
-                        child: Center(child: Text(500.toString())),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue,
-                          ),
-                        ),
-                        child: Center(child: Text(500.toString())),
-                      ),
-                    ),
-                  ]),
+                        )
+                        .toList(),
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
+    ).whenComplete(
+      () => setState(() {
+        _nameFieldController.text = '';
+        _amountFieldController.text = '';
+        _newRecordName = '';
+        _newRecordAmount = 0;
+        _candidateAmounts = [];
+      }),
     );
   }
 
