@@ -53,7 +53,7 @@ class _HomeTabViewState extends State<HomeTabView>
     // TODO: Replace with Real Database
     List<ExpenseSummary> recurring = List.generate(5, (index) {
       return ExpenseSummary(
-          'テスト Rcr $index', index * 100, widget.year, widget.month);
+          'テスト Rcr $index', index * 5000, widget.year, widget.month);
     });
     List<ExpenseSummary> temporary = List.generate(5, (index) {
       return ExpenseSummary(
@@ -74,20 +74,71 @@ class _HomeTabViewState extends State<HomeTabView>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Center(
-            child: Text(
-              summary.name,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              alignment: Alignment.centerLeft,
+              child: Text(summary.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                  )),
             ),
-          ),
-          Center(
-            child: Text(
-              summary.amount.toString(),
+            const Spacer(),
+            Container(
+              alignment: Alignment.centerRight,
+              child: Text(
+                summary.amount.toString(),
+                style: const TextStyle(
+                  fontSize: 32,
+                ),
+              ),
             ),
-          ),
-        ],
+            const Spacer(),
+            // Container(
+            //   alignment: Alignment.centerLeft,
+            //   child: const Text(
+            //     'Budget',
+            //     style: TextStyle(
+            //       fontSize: 10,
+            //       color: Colors.black45,
+            //     ),
+            //   ),
+            // ),
+            // Container(
+            //   alignment: Alignment.centerRight,
+            //   child: Text(
+            //     summary.amount.toString(),
+            //     style: const TextStyle(
+            //       fontSize: 14,
+            //       color: Colors.black45,
+            //     ),
+            //   ),
+            // ),
+            Container(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Last Month',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.black45,
+                ),
+              ),
+            ),
+            Container(
+              alignment: Alignment.centerRight,
+              child: Text(
+                summary.amount.toString(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black45,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
