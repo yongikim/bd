@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 
+import 'detail.dart';
+
 class ExpenseSummary {
   late String name;
   late int amount;
   late int year;
   late int month;
 
-  ExpenseSummary(this.name, this.amount, this.year, this.month);
+  ExpenseSummary(
+    this.name,
+    this.amount,
+    this.year,
+    this.month,
+  );
 }
 
 class HomeTabView extends StatefulWidget {
-  const HomeTabView({Key? key, required this.year, required this.month})
-      : super(key: key);
+  const HomeTabView({
+    Key? key,
+    required this.year,
+    required this.month,
+  }) : super(key: key);
 
   final int year;
   final int month;
@@ -66,78 +76,107 @@ class _HomeTabViewState extends State<HomeTabView>
     return data;
   }
 
+  _handleSummaryCardTap(ExpenseSummary summary) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+          opaque: false,
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (_, Animation<double> animation, ___) {
+            return FadeTransition(
+              opacity: animation,
+              child: Detail(
+                summary: summary,
+              ),
+            );
+          }),
+    );
+  }
+
   Widget summaryCard(ExpenseSummary summary, EdgeInsets margin) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 4,
-      margin: margin,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(summary.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                  )),
+    final String heroTag = '${summary.year}${summary.month}${summary.name}';
+    return Hero(
+      tag: heroTag,
+      child: Material(
+        type: MaterialType.transparency,
+        child: GestureDetector(
+          onTap: () {
+            _handleSummaryCardTap(summary);
+          },
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: 4,
+            margin: margin,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
-            const Spacer(),
-            Container(
-              alignment: Alignment.centerRight,
-              child: Text(
-                summary.amount.toString(),
-                style: const TextStyle(
-                  fontSize: 32,
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: Text(summary.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                        )),
+                  ),
+                  const Spacer(),
+                  Container(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      summary.amount.toString(),
+                      style: const TextStyle(
+                        fontSize: 32,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  // Container(
+                  //   alignment: Alignment.centerLeft,
+                  //   child: const Text(
+                  //     'Budget',
+                  //     style: TextStyle(
+                  //       fontSize: 10,
+                  //       color: Colors.black45,
+                  //     ),
+                  //   ),
+                  // ),
+                  // Container(
+                  //   alignment: Alignment.centerRight,
+                  //   child: Text(
+                  //     summary.amount.toString(),
+                  //     style: const TextStyle(
+                  //       fontSize: 14,
+                  //       color: Colors.black45,
+                  //     ),
+                  //   ),
+                  // ),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Last Month',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      summary.amount.toString(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-            // Container(
-            //   alignment: Alignment.centerLeft,
-            //   child: const Text(
-            //     'Budget',
-            //     style: TextStyle(
-            //       fontSize: 10,
-            //       color: Colors.black45,
-            //     ),
-            //   ),
-            // ),
-            // Container(
-            //   alignment: Alignment.centerRight,
-            //   child: Text(
-            //     summary.amount.toString(),
-            //     style: const TextStyle(
-            //       fontSize: 14,
-            //       color: Colors.black45,
-            //     ),
-            //   ),
-            // ),
-            Container(
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                'Last Month',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.black45,
-                ),
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerRight,
-              child: Text(
-                summary.amount.toString(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black45,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
