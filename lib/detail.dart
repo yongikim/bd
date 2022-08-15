@@ -1,5 +1,6 @@
 import 'package:bd/home_tab_view.dart';
 import 'package:bd/int_extension.dart';
+import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
 
 class Expense {
@@ -111,6 +112,20 @@ class _Detail extends State<Detail> {
         .toList();
   }
 
+  // 記録作成画面
+  void _showNewRecordModal() {
+    showModalBottomSheet<void>(
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      context: context,
+      builder: (context) => const NewRecord(),
+    ).whenComplete(
+      () => setState(() {
+        // Do Something
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ExpenseSummary summary = widget.summary;
@@ -118,8 +133,7 @@ class _Detail extends State<Detail> {
 
     const appBarHeight = 70.0;
     const bottomBarHeight = 40 + 48;
-    final safeAreaPaddingHeight = MediaQuery.of(context).padding.bottom +
-        MediaQuery.of(context).padding.top;
+    final safeAreaPaddingHeight = MediaQuery.of(context).padding.top;
     final containerHeight = MediaQuery.of(context).size.height -
         (appBarHeight + bottomBarHeight + safeAreaPaddingHeight);
 
@@ -189,10 +203,10 @@ class _Detail extends State<Detail> {
           },
           child: Material(
             type: MaterialType.transparency,
-            child: SafeArea(
-              child: Scaffold(
-                appBar: PreferredSize(
-                  preferredSize: Size.fromHeight(appBarHeight),
+            child: Scaffold(
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(appBarHeight),
+                child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -230,29 +244,31 @@ class _Detail extends State<Detail> {
                     ),
                   ),
                 ),
-                body: SingleChildScrollView(
-                  child: container,
+              ),
+              body: SingleChildScrollView(
+                child: container,
+              ),
+              bottomNavigationBar: Padding(
+                padding: const EdgeInsets.only(
+                  top: 8,
+                  left: 16,
+                  right: 16,
+                  bottom: 32,
                 ),
-                bottomNavigationBar: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 8,
-                    left: 16,
-                    right: 16,
-                    bottom: 32,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showNewRecordModal();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      size: 28,
-                    ),
+                  child: const Icon(
+                    Icons.add,
+                    size: 28,
                   ),
                 ),
               ),

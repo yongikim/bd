@@ -1,3 +1,4 @@
+import 'package:bd/int_extension.dart';
 import 'package:flutter/material.dart';
 
 import 'detail.dart';
@@ -126,13 +127,14 @@ class _HomeTabViewState extends State<HomeTabView>
                   Container(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      summary.amount.toString(),
+                      summary.amount.toPriceString(),
                       style: const TextStyle(
                         fontSize: 32,
                       ),
                     ),
                   ),
                   const Spacer(),
+                  // 予算
                   // Container(
                   //   alignment: Alignment.centerLeft,
                   //   child: const Text(
