@@ -1,6 +1,5 @@
 import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'home_tab_view.dart';
 
@@ -32,44 +31,96 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
-  late List<int> _monthsThisYear;
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  int get _prevTabIndex => _tabController.previousIndex;
+  int get _nextTabIndex => _tabController.index;
   late TabController _tabController;
-  int _year = DateTime.now().year;
+  late List<HomeTabView> _tabs;
   int _month = DateTime.now().month;
 
   @override
   void initState() {
     super.initState();
 
-    _monthsThisYear = _getMonthsThisYear();
+    List<int> months = _getMonthsThisYear();
 
     _tabController = TabController(
       vsync: this,
-      length: _monthsThisYear.length,
-      initialIndex: _monthsThisYear.length - 1,
+      length: months.length,
+      initialIndex: months.length - 1,
     );
 
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        final int prevIndex = _tabController.previousIndex;
-        final int nextIndex = _tabController.index;
-        if (nextIndex < prevIndex) {
+    Function() listner = _createTabChangeListener(_tabController);
+    _tabController.addListener(listner);
+
+    int year = DateTime.now().year;
+    _tabs = List.generate(
+      months.length,
+      (index) => HomeTabView(
+        year: year,
+        month: months[index],
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(MyHomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
+  // TabControllerに紐付けられたlistener関数を生成する関数
+  Function() _createTabChangeListener(TabController controller) {
+    return () {
+      if (!controller.indexIsChanging) {
+        final int prevIndex = _prevTabIndex;
+        final int nextIndex = _nextTabIndex;
+        final int prevMonth = _tabs[prevIndex].month;
+        final int prevYear = _tabs[prevIndex].year;
+        if (nextIndex == 0) {
+          // 左端のタブに到達する前に左端に2ヶ月前のタブを追加
+          int year, month;
+          if (prevMonth > 2) {
+            year = prevYear;
+            month = prevMonth - 2;
+          } else {
+            year = prevYear - 1;
+            month = prevMonth + 10;
+          }
+
+          // Deep Copy
+          List<HomeTabView> newTabs = [..._tabs];
+          newTabs.insert(
+            0,
+            HomeTabView(year: year, month: month),
+          );
+
+          // タブの増加に対応したTabControllerに差し替える
+          TabController newController = TabController(
+            // length: newTabs.length,
+            length: _tabs.length + 1,
+            vsync: this,
+            initialIndex: nextIndex + 1,
+          );
+          Function() listener = _createTabChangeListener(controller);
+          newController.addListener(listener);
+
           setState(() {
-            _month = _month - 1;
+            _tabs = newTabs;
+            _tabController = newController;
+            _month = _tabs[nextIndex + 1].month;
           });
         } else {
           setState(() {
-            _month = _month + 1;
+            _month = _tabs[nextIndex].month;
           });
         }
       }
-    });
+    };
   }
 
   List<int> _getMonthsThisYear() {
-    List<int> months = List.generate(_month, (index) => index + 1);
+    int month = DateTime.now().month;
+    List<int> months = List.generate(month, (index) => index + 1);
     return months;
   }
 
@@ -115,13 +166,7 @@ class _MyHomePageState extends State<MyHomePage>
         },
         body: TabBarView(
           controller: _tabController,
-          children: List.generate(
-            _monthsThisYear.length,
-            (index) => HomeTabView(
-              year: _year,
-              month: _monthsThisYear[index],
-            ),
-          ),
+          children: _tabs,
         ),
       ),
       bottomNavigationBar: Padding(

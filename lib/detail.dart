@@ -23,9 +23,11 @@ class Detail extends StatefulWidget {
   const Detail({
     Key? key,
     required this.summary,
+    required this.heroTag,
   }) : super(key: key);
 
   final ExpenseSummary summary;
+  final String heroTag;
 
   @override
   State<Detail> createState() => _Detail();
@@ -129,7 +131,6 @@ class _Detail extends State<Detail> {
   @override
   Widget build(BuildContext context) {
     final ExpenseSummary summary = widget.summary;
-    final String heroTag = '${summary.year}${summary.month}${summary.name}';
 
     const appBarHeight = 70.0;
     const bottomBarHeight = 40 + 48;
@@ -196,7 +197,7 @@ class _Detail extends State<Detail> {
     return Scaffold(
       backgroundColor: Theme.of(context).canvasColor,
       body: Hero(
-        tag: heroTag,
+        tag: widget.heroTag,
         child: GestureDetector(
           onHorizontalDragEnd: (details) {
             Navigator.of(context).pop();

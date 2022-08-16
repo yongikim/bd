@@ -77,7 +77,7 @@ class _HomeTabViewState extends State<HomeTabView>
     return data;
   }
 
-  _handleSummaryCardTap(ExpenseSummary summary) {
+  _handleSummaryCardTap(ExpenseSummary summary, String heroTag) {
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -88,6 +88,7 @@ class _HomeTabViewState extends State<HomeTabView>
               opacity: animation,
               child: Detail(
                 summary: summary,
+                heroTag: heroTag,
               ),
             );
           }),
@@ -95,14 +96,15 @@ class _HomeTabViewState extends State<HomeTabView>
   }
 
   Widget summaryCard(ExpenseSummary summary, EdgeInsets margin) {
-    final String heroTag = '${summary.year}${summary.month}${summary.name}';
+    final String heroTag =
+        '${summary.year}${summary.month}${summary.name}${DateTime.now().hashCode}';
     return Hero(
       tag: heroTag,
       child: Material(
         type: MaterialType.transparency,
         child: GestureDetector(
           onTap: () {
-            _handleSummaryCardTap(summary);
+            _handleSummaryCardTap(summary, heroTag);
           },
           child: Card(
             clipBehavior: Clip.antiAlias,
@@ -118,7 +120,7 @@ class _HomeTabViewState extends State<HomeTabView>
                 children: [
                   Container(
                     alignment: Alignment.centerLeft,
-                    child: Text(summary.name,
+                    child: Text('${widget.month} ${summary.name}',
                         style: const TextStyle(
                           fontSize: 14,
                         )),
