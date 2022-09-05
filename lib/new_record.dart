@@ -1,5 +1,8 @@
+import 'package:bd/db_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'model/expense.dart';
 
 class NewRecord extends StatefulWidget {
   const NewRecord({
@@ -87,7 +90,20 @@ class _NewRecord extends State<NewRecord> {
   // 記録作成ハンドラ
   // TODO: Implement
   Future<void> _handleNewRecordSubmit() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    DBProvider db = DBProvider();
+    await db.init();
+
+    final now = DateTime.now();
+
+    final Expense expense = Expense(
+      _newRecordName,
+      _newRecordAmount,
+      now.year,
+      now.month,
+      now.day,
+    );
+
+    await db.insertExpense(expense);
   }
 
   @override

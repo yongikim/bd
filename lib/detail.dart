@@ -3,21 +3,7 @@ import 'package:bd/int_extension.dart';
 import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
 
-class Expense {
-  late String name;
-  late int amount;
-  late int year;
-  late int month;
-  late int day;
-
-  Expense(
-    this.name,
-    this.amount,
-    this.year,
-    this.month,
-    this.day,
-  );
-}
+import 'model/expense.dart';
 
 class Detail extends StatefulWidget {
   const Detail({

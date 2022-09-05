@@ -5,26 +5,30 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
+import 'package:bd/db_provider.dart';
+import 'package:bd/model/expense.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:bd/main.dart';
+void main() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Expense create test', () async {
+    final DBProvider provider = DBProvider();
+    await provider.init(dbName: "test");
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    Expense expense = Expense(
+      "test",
+      100,
+      2022,
+      9,
+      3,
+    );
+    Expense insertedExpense = await provider.insertExpense(expense);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    Expense readExpense = await provider.findExpenseByID(insertedExpense.id!);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(insertedExpense, readExpense);
+
+    provider.deleteCurrentDB();
   });
 }

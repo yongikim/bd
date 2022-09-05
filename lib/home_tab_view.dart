@@ -1,4 +1,6 @@
+import 'package:bd/db_provider.dart';
 import 'package:bd/int_extension.dart';
+import 'package:bd/model/expense.dart';
 import 'package:flutter/material.dart';
 
 import 'detail.dart';
@@ -8,6 +10,7 @@ class ExpenseSummary {
   late int amount;
   late int year;
   late int month;
+  bool recurring = false;
 
   ExpenseSummary(
     this.name,
@@ -37,7 +40,7 @@ class _HomeTabViewState extends State<HomeTabView>
   bool get wantKeepAlive => true;
 
   // 指定された year, month の記録
-  late Future<Map<String, List<ExpenseSummary>>> _future;
+  late Future<List<ExpenseSummary>> _summaries;
 
   // SummaryCards を展開し、グリッドで表示するかどうか
   late bool _seeAllRecurring;
@@ -47,7 +50,7 @@ class _HomeTabViewState extends State<HomeTabView>
   void initState() {
     super.initState();
 
-    _future = _getRecords();
+    _summaries = fetchExpenseSummaries();
 
     // デフォルトは横スクロール表示
     _seeAllRecurring = false;
@@ -55,26 +58,31 @@ class _HomeTabViewState extends State<HomeTabView>
   }
 
   // 指定された year, month の記録をデータベースから全て取得する
-  Future<Map<String, List<ExpenseSummary>>> _getRecords() async {
+  Future<List<ExpenseSummary>> fetchExpenseSummaries() async {
     Map<String, List<ExpenseSummary>> data = {};
 
-    // Fake async
-    await Future.delayed(const Duration(milliseconds: 300));
+    DBProvider dbProvider = DBProvider();
+    await dbProvider.init();
 
-    // TODO: Replace with Real Database
-    List<ExpenseSummary> recurring = List.generate(5, (index) {
-      return ExpenseSummary(
-          'テスト Rcr $index', index * 5000, widget.year, widget.month);
+    final summaries = dbProvider.getExpenseSummaries(
+      widget.year,
+      widget.month,
+    );
+
+    setState(() {
+      _summaries = summaries;
     });
-    List<ExpenseSummary> temporary = List.generate(5, (index) {
-      return ExpenseSummary(
-          'テスト Tmp $index', index * 100, widget.year, widget.month);
-    });
 
-    data['recurring'] = recurring;
-    data['temporary'] = temporary;
+    return summaries;
+    // List<ExpenseSummary> recurring =
+    //     summaries.where((s) => s.recurring).toList();
+    // List<ExpenseSummary> temporary =
+    //     summaries.where((s) => !s.recurring).toList();
 
-    return data;
+    // data['recurring'] = recurring;
+    // data['temporary'] = temporary;
+
+    // return data;
   }
 
   _handleSummaryCardTap(ExpenseSummary summary, String heroTag) {
@@ -190,12 +198,14 @@ class _HomeTabViewState extends State<HomeTabView>
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder(
-      future: _future,
-      builder: (BuildContext context,
-          AsyncSnapshot<Map<String, List<ExpenseSummary>>> snapshot) {
+      future: _summaries,
+      builder:
+          (BuildContext context, AsyncSnapshot<List<ExpenseSummary>> snapshot) {
         if (snapshot.hasData) {
-          List<ExpenseSummary> recurring = snapshot.data!['recurring']!;
-          List<ExpenseSummary> temporary = snapshot.data!['temporary']!;
+          List<ExpenseSummary> recurring =
+              snapshot.data!.where((e) => e.recurring).toList();
+          List<ExpenseSummary> temporary =
+              snapshot.data!.where((e) => !e.recurring).toList();
           return SafeArea(
             top: true,
             bottom: true,

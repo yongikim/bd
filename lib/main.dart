@@ -1,10 +1,18 @@
+import 'package:bd/expense_provider.dart';
+import 'package:bd/model/expense.dart';
 import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'home_tab_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ExpenseProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -125,17 +133,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   // 記録作成画面
-  void _showNewRecordModal() {
-    showModalBottomSheet<void>(
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) => const NewRecord(),
-    ).whenComplete(
-      () => setState(() {
-        // Do Something
-      }),
-    );
+  _showNewRecordModal(BuildContext context, ExpenseProvider provider) {
+    return () async {
+      await showModalBottomSheet<void>(
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        context: context,
+        builder: (BuildContext context) => const NewRecord(),
+      );
+      print('complete');
+      setState(() {});
+      // await provider.fetchExpenses(year, month),
+    };
   }
 
   @override
@@ -176,20 +185,23 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           right: 16,
           bottom: 32,
         ),
-        child: ElevatedButton(
-          onPressed: _showNewRecordModal,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+        child: Consumer<ExpenseProvider>(
+            builder: (context, expenseProvider, child) {
+          return ElevatedButton(
+            onPressed: _showNewRecordModal(context, expenseProvider),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
-          ),
-          child: const Icon(
-            Icons.add,
-            size: 28,
-          ),
-        ),
+            child: const Icon(
+              Icons.add,
+              size: 28,
+            ),
+          );
+        }),
       ),
     );
   }
