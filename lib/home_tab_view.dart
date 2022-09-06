@@ -1,4 +1,4 @@
-import 'package:bd/int_extension.dart';
+import 'package:bd/utility/int_extension.dart';
 import 'package:bd/riverpods/expense_summary_provider.dart';
 import 'package:bd/riverpods/toggle_state_provider.dart';
 import 'package:flutter/material.dart';
