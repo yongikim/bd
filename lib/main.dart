@@ -1,16 +1,12 @@
-import 'package:bd/expense_provider.dart';
-import 'package:bd/model/expense.dart';
-import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'home_tab_view.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ExpenseProvider(),
-      child: const MyApp(),
+    const ProviderScope(
+      child: MyApp(),
     ),
   );
 }
@@ -62,13 +58,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _tabController.addListener(listner);
 
     int year = DateTime.now().year;
-    _tabs = List.generate(
-      months.length,
-      (index) => HomeTabView(
-        year: year,
-        month: months[index],
-      ),
-    );
+    List<HomeTabView> tabs = [];
+    for (var i = 0; i < months.length; i++) {
+      tabs.add(
+        HomeTabView(
+          year: year,
+          month: months[i],
+        ),
+      );
+    }
+    _tabs = tabs;
   }
 
   @override
@@ -132,21 +131,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return months;
   }
 
-  // 記録作成画面
-  _showNewRecordModal(BuildContext context, ExpenseProvider provider) {
-    return () async {
-      await showModalBottomSheet<void>(
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        context: context,
-        builder: (BuildContext context) => const NewRecord(),
-      );
-      print('complete');
-      setState(() {});
-      // await provider.fetchExpenses(year, month),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,31 +161,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           controller: _tabController,
           children: _tabs,
         ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(
-          top: 8,
-          left: 16,
-          right: 16,
-          bottom: 32,
-        ),
-        child: Consumer<ExpenseProvider>(
-            builder: (context, expenseProvider, child) {
-          return ElevatedButton(
-            onPressed: _showNewRecordModal(context, expenseProvider),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: const Icon(
-              Icons.add,
-              size: 28,
-            ),
-          );
-        }),
       ),
     );
   }

@@ -2,10 +2,10 @@ import 'package:bd/model/expense.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'home_tab_view.dart';
+import '../home_tab_view.dart';
 
-class DBProvider {
-  DBProvider();
+class ExpenseRepository {
+  ExpenseRepository();
 
   late Database _db;
   late String _dbPath;

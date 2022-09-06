@@ -1,4 +1,4 @@
-import 'package:bd/db_provider.dart';
+import 'package:bd/repository/expense_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -90,8 +90,8 @@ class _NewRecord extends State<NewRecord> {
   // 記録作成ハンドラ
   // TODO: Implement
   Future<void> _handleNewRecordSubmit() async {
-    DBProvider db = DBProvider();
-    await db.init();
+    ExpenseRepository repo = ExpenseRepository();
+    await repo.init();
 
     final now = DateTime.now();
 
@@ -103,7 +103,7 @@ class _NewRecord extends State<NewRecord> {
       now.day,
     );
 
-    await db.insertExpense(expense);
+    await repo.insertExpense(expense);
   }
 
   @override

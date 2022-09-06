@@ -1,9 +1,12 @@
-import 'package:bd/db_provider.dart';
 import 'package:bd/int_extension.dart';
-import 'package:bd/model/expense.dart';
+import 'package:bd/riverpods/expense_summary_provider.dart';
+import 'package:bd/riverpods/toggle_state_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 import 'detail.dart';
+import 'new_record.dart';
 
 class ExpenseSummary {
   late String name;
@@ -20,7 +23,7 @@ class ExpenseSummary {
   );
 }
 
-class HomeTabView extends StatefulWidget {
+class HomeTabView extends ConsumerWidget {
   const HomeTabView({
     Key? key,
     required this.year,
@@ -30,62 +33,11 @@ class HomeTabView extends StatefulWidget {
   final int year;
   final int month;
 
-  @override
-  State<HomeTabView> createState() => _HomeTabViewState();
-}
-
-class _HomeTabViewState extends State<HomeTabView>
-    with AutomaticKeepAliveClientMixin<HomeTabView> {
-  @override
-  bool get wantKeepAlive => true;
-
-  // 指定された year, month の記録
-  late Future<List<ExpenseSummary>> _summaries;
-
-  // SummaryCards を展開し、グリッドで表示するかどうか
-  late bool _seeAllRecurring;
-  late bool _seeAllTemporary;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _summaries = fetchExpenseSummaries();
-
-    // デフォルトは横スクロール表示
-    _seeAllRecurring = false;
-    _seeAllTemporary = false;
-  }
-
-  // 指定された year, month の記録をデータベースから全て取得する
-  Future<List<ExpenseSummary>> fetchExpenseSummaries() async {
-    Map<String, List<ExpenseSummary>> data = {};
-
-    DBProvider dbProvider = DBProvider();
-    await dbProvider.init();
-
-    final summaries = dbProvider.getExpenseSummaries(
-      widget.year,
-      widget.month,
-    );
-
-    setState(() {
-      _summaries = summaries;
-    });
-
-    return summaries;
-    // List<ExpenseSummary> recurring =
-    //     summaries.where((s) => s.recurring).toList();
-    // List<ExpenseSummary> temporary =
-    //     summaries.where((s) => !s.recurring).toList();
-
-    // data['recurring'] = recurring;
-    // data['temporary'] = temporary;
-
-    // return data;
-  }
-
-  _handleSummaryCardTap(ExpenseSummary summary, String heroTag) {
+  _handleSummaryCardTap(
+    BuildContext context,
+    ExpenseSummary summary,
+    String heroTag,
+  ) {
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -103,7 +55,11 @@ class _HomeTabViewState extends State<HomeTabView>
     );
   }
 
-  Widget summaryCard(ExpenseSummary summary, EdgeInsets margin) {
+  Widget summaryCard(
+    BuildContext context,
+    ExpenseSummary summary,
+    EdgeInsets margin,
+  ) {
     final String heroTag =
         '${summary.year}${summary.month}${summary.name}${DateTime.now().hashCode}';
     return Hero(
@@ -112,7 +68,11 @@ class _HomeTabViewState extends State<HomeTabView>
         type: MaterialType.transparency,
         child: GestureDetector(
           onTap: () {
-            _handleSummaryCardTap(summary, heroTag);
+            _handleSummaryCardTap(
+              context,
+              summary,
+              heroTag,
+            );
           },
           child: Card(
             clipBehavior: Clip.antiAlias,
@@ -128,10 +88,12 @@ class _HomeTabViewState extends State<HomeTabView>
                 children: [
                   Container(
                     alignment: Alignment.centerLeft,
-                    child: Text('${widget.month} ${summary.name}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                        )),
+                    child: Text(
+                      summary.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                   const Spacer(),
                   Container(
@@ -195,18 +157,33 @@ class _HomeTabViewState extends State<HomeTabView>
   }
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder(
-      future: _summaries,
-      builder:
-          (BuildContext context, AsyncSnapshot<List<ExpenseSummary>> snapshot) {
-        if (snapshot.hasData) {
-          List<ExpenseSummary> recurring =
-              snapshot.data!.where((e) => e.recurring).toList();
-          List<ExpenseSummary> temporary =
-              snapshot.data!.where((e) => !e.recurring).toList();
-          return SafeArea(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showAllRecurring = ref.watch(showAllRecurringProvider);
+    final showAllTemporary = ref.watch(showAllTemporaryProvider);
+    final targetExpeseProvider = expenseSummaryProvider(Tuple2(year, month));
+    final summaries = ref.watch(targetExpeseProvider);
+
+    // 記録作成画面
+    showNewRecordModal() {
+      return () async {
+        await showModalBottomSheet<void>(
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          context: context,
+          builder: (BuildContext context) => const NewRecord(),
+        );
+        ref.refresh(targetExpeseProvider);
+      };
+    }
+
+    return summaries.when(
+      data: (summariesData) {
+        List<ExpenseSummary> recurring =
+            summariesData.where((e) => e.recurring).toList();
+        List<ExpenseSummary> temporary =
+            summariesData.where((e) => !e.recurring).toList();
+        return Scaffold(
+          body: SafeArea(
             top: true,
             bottom: true,
             child: Padding(
@@ -230,11 +207,11 @@ class _HomeTabViewState extends State<HomeTabView>
                           ),
                           TextButton(
                             onPressed: () {
-                              setState(() {
-                                _seeAllRecurring = !_seeAllRecurring;
-                              });
+                              ref
+                                  .read(showAllRecurringProvider.notifier)
+                                  .state = !showAllRecurring;
                             },
-                            child: _seeAllRecurring
+                            child: showAllRecurring
                                 ? const Text('See Less')
                                 : const Text('See All'),
                           ),
@@ -242,7 +219,7 @@ class _HomeTabViewState extends State<HomeTabView>
                       ),
                     ),
                   ),
-                  _seeAllRecurring
+                  showAllRecurring
                       ? SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           sliver: SliverGrid(
@@ -252,6 +229,7 @@ class _HomeTabViewState extends State<HomeTabView>
                             delegate: SliverChildListDelegate(
                               recurring.asMap().entries.map((e) {
                                 return summaryCard(
+                                  context,
                                   e.value,
                                   const EdgeInsets.all(5),
                                 );
@@ -274,6 +252,7 @@ class _HomeTabViewState extends State<HomeTabView>
                                             ? 180
                                             : 170,
                                         child: summaryCard(
+                                          context,
                                           e.value,
                                           EdgeInsets.only(
                                             top: 5,
@@ -307,11 +286,11 @@ class _HomeTabViewState extends State<HomeTabView>
                           ),
                           TextButton(
                             onPressed: () {
-                              setState(() {
-                                _seeAllTemporary = !_seeAllTemporary;
-                              });
+                              ref
+                                  .read(showAllTemporaryProvider.notifier)
+                                  .state = !showAllTemporary;
                             },
-                            child: _seeAllTemporary
+                            child: showAllTemporary
                                 ? const Text('See Less')
                                 : const Text('See All'),
                           )
@@ -319,7 +298,7 @@ class _HomeTabViewState extends State<HomeTabView>
                       ),
                     ),
                   ),
-                  _seeAllTemporary
+                  showAllTemporary
                       ? SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           sliver: SliverGrid(
@@ -329,6 +308,7 @@ class _HomeTabViewState extends State<HomeTabView>
                             delegate: SliverChildListDelegate(
                               temporary.asMap().entries.map((e) {
                                 return summaryCard(
+                                  context,
                                   e.value,
                                   const EdgeInsets.all(5),
                                 );
@@ -351,6 +331,7 @@ class _HomeTabViewState extends State<HomeTabView>
                                             ? 180
                                             : 170,
                                         child: summaryCard(
+                                          context,
                                           e.value,
                                           EdgeInsets.only(
                                             top: 5,
@@ -372,12 +353,40 @@ class _HomeTabViewState extends State<HomeTabView>
                 ],
               ),
             ),
-          );
-        } else {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+          ),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.only(
+              top: 8,
+              left: 16,
+              right: 16,
+              bottom: 32,
+            ),
+            child: ElevatedButton(
+              onPressed: showNewRecordModal(),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: const Icon(
+                Icons.add,
+                size: 28,
+              ),
+            ),
+          ),
+        );
+      },
+      error: (e, t) {
+        return const Center(
+          child: Text("error"),
+        );
+      },
+      loading: () {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
       },
     );
   }

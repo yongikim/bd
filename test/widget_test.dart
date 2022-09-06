@@ -5,7 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:bd/db_provider.dart';
+import 'package:bd/repository/expense_repository.dart';
 import 'package:bd/model/expense.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,8 +13,8 @@ void main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('Expense create test', () async {
-    final DBProvider provider = DBProvider();
-    await provider.init(dbName: "test");
+    final ExpenseRepository repo = ExpenseRepository();
+    await repo.init(dbName: "test");
 
     Expense expense = Expense(
       "test",
@@ -23,12 +23,12 @@ void main() async {
       9,
       3,
     );
-    Expense insertedExpense = await provider.insertExpense(expense);
+    Expense insertedExpense = await repo.insertExpense(expense);
 
-    Expense readExpense = await provider.findExpenseByID(insertedExpense.id!);
+    Expense readExpense = await repo.findExpenseByID(insertedExpense.id!);
 
     expect(insertedExpense, readExpense);
 
-    provider.deleteCurrentDB();
+    repo.deleteCurrentDB();
   });
 }
