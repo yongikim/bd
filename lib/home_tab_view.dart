@@ -91,7 +91,7 @@ class HomeTabView extends ConsumerWidget {
                     child: Text(
                       summary.name,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                       ),
                     ),
                   ),
