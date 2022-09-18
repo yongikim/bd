@@ -180,8 +180,10 @@ class HomeTabView extends ConsumerWidget {
       data: (summariesData) {
         List<ExpenseSummary> recurring =
             summariesData.where((e) => e.recurring).toList();
+        recurring.sort((a, b) => b.amount.compareTo(a.amount));
         List<ExpenseSummary> temporary =
             summariesData.where((e) => !e.recurring).toList();
+        temporary.sort((a, b) => b.amount.compareTo(a.amount));
         return Scaffold(
           body: SafeArea(
             top: true,
