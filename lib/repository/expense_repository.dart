@@ -56,18 +56,51 @@ class ExpenseRepository {
     return expense;
   }
 
-  // データベースから、`year` / `month` に作成された
-  // 記録の名前を取得し、金額で降順にソートして返す。
+  // `year` / `month` に作成された記録の名前を取得し、
+  // 金額で降順にソートして返す。
   Future<List<String>> expenseNames(int year, int month) async {
     final summaries = await getExpenseSummaries(year, month);
 
+    // 金額順で昇順にソート
     summaries.sort((a, b) => b.amount.compareTo(a.amount));
+    final names = summaries.map((e) => e.name).toList();
 
-    return summaries
-        .map(
-          (e) => e.name,
-        )
-        .toList();
+    return names;
+  }
+
+  // 過去 `days` 日間に作成された記録のうち、
+  // 名前が `name` に一致する記録を返す。
+  Future<List<Expense>> findByNameInPastDays(String name, int days) async {
+    final now = DateTime.now();
+    final List<Map<String, dynamic>> results = await _db.query(
+      'expense',
+      where: 'name = ? AND day >= ?',
+      whereArgs: [name, now.day - days],
+    );
+
+    final expenses = results.map((e) => Expense.fromMap(e)).toList();
+
+    return expenses;
+  }
+
+  // `year` / `month に作成された記録のうち、
+  // 名前が `name` に一致する記録の金額を昇順にソートして返す。
+  // ただし、重複は削除する。
+  Future<List<int>> amountsByYearMonthName(
+      int year, int month, String name) async {
+    final List<Map<String, dynamic>> expenses = await _db.query(
+      'expense',
+      where: 'year = ? AND month = ? AND name = ?',
+      whereArgs: [year, month, name],
+    );
+
+    // 重複のないリスト
+    final amounts = expenses.map((e) => e['amount'] as int).toSet().toList();
+
+    // 降順
+    amounts.sort((a, b) => b.compareTo(a));
+
+    return amounts;
   }
 
   Future<List<ExpenseSummary>> getExpenseSummaries(int year, int month) async {

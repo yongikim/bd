@@ -64,16 +64,16 @@ class _NewRecord extends State<NewRecord> {
     });
     _nameFieldController.text = name;
 
-    // FIXME: 金額候補の取得
-    await Future.delayed(const Duration(milliseconds: 300));
+    // 金額候補の取得
+    final repo = ExpenseRepository();
+    await repo.init();
+    final expenses = await repo.findByNameInPastDays(name, 30);
+    // 重複を削除し、降順にソート
+    final amounts = expenses.map((e) => e.amount).toSet().toList();
+    amounts.sort((a, b) => b.compareTo(a));
+
     setState(() {
-      if (name == 'スタバ') {
-        _candidateAmounts = [100, 200, 300];
-      } else if (name == 'タリーズ') {
-        _candidateAmounts = [10, 20, 30];
-      } else if (name == 'ドトール') {
-        _candidateAmounts = [1000, 2000, 3000];
-      }
+      _candidateAmounts = amounts;
     });
 
     // 金額フォームにフォーカスを当てる
@@ -206,11 +206,14 @@ class _NewRecord extends State<NewRecord> {
               ),
             ),
             // 金額候補
-            SizedBox(
-              height: 48,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  runSpacing: 0.0,
+                  alignment: WrapAlignment.start,
+                  direction: Axis.horizontal,
                   children: _candidateAmounts
                       .map(
                         (amount) => Card(
@@ -219,12 +222,12 @@ class _NewRecord extends State<NewRecord> {
                             onPressed: () {
                               _handleCandidateAmountClick(amount);
                             },
-                            child: Center(
-                              child: Text(
-                                amount.toString(),
-                                style: const TextStyle(color: Colors.black54),
-                              ),
+                            // child: Center(
+                            child: Text(
+                              amount.toString(),
+                              style: const TextStyle(color: Colors.black54),
                             ),
+                            // ),
                           ),
                         ),
                       )
@@ -232,6 +235,32 @@ class _NewRecord extends State<NewRecord> {
                 ),
               ),
             ),
+            // SizedBox(
+            //   height: 48,
+            //   child: Padding(
+            //     padding: const EdgeInsets.symmetric(horizontal: 16),
+            //     child: Row(
+            //       children: _candidateAmounts
+            //           .map(
+            //             (amount) => Card(
+            //               elevation: 2,
+            //               child: TextButton(
+            //                 onPressed: () {
+            //                   _handleCandidateAmountClick(amount);
+            //                 },
+            //                 child: Center(
+            //                   child: Text(
+            //                     amount.toString(),
+            //                     style: const TextStyle(color: Colors.black54),
+            //                   ),
+            //                 ),
+            //               ),
+            //             ),
+            //           )
+            //           .toList(),
+            //     ),
+            //   ),
+            // ),
             const Spacer(),
             // 登録ボタン
             Padding(
