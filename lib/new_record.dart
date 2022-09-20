@@ -37,17 +37,19 @@ class _NewRecord extends State<NewRecord> {
   // 金額入力ハンドラ
   void _handleNewRecordAmountChange(String input) {
     int? amount = int.tryParse(input);
-    if (amount == null) {}
+    amount ??= 0;
 
     setState(() {
       _newRecordAmount = amount!;
     });
   }
 
-  // TODO: Get from Real Database
+  // 名前候補の取得
   Future<List<String>> _getCandidateNames() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return ['スタバ', 'タリーズ', 'ドトール'];
+    final repo = ExpenseRepository();
+    await repo.init();
+    final now = DateTime.now();
+    return await repo.expenseNames(now.year, now.month);
   }
 
   // 名前候補の選択
@@ -62,7 +64,7 @@ class _NewRecord extends State<NewRecord> {
     });
     _nameFieldController.text = name;
 
-    // 金額候補の取得
+    // FIXME: 金額候補の取得
     await Future.delayed(const Duration(milliseconds: 300));
     setState(() {
       if (name == 'スタバ') {
@@ -88,7 +90,6 @@ class _NewRecord extends State<NewRecord> {
   }
 
   // 記録作成ハンドラ
-  // TODO: Implement
   Future<void> _handleNewRecordSubmit() async {
     ExpenseRepository repo = ExpenseRepository();
     await repo.init();

@@ -56,7 +56,20 @@ class ExpenseRepository {
     return expense;
   }
 
-  // FIXME: `name` で名寄せ
+  // データベースから、`year` / `month` に作成された
+  // 記録の名前を取得し、金額で降順にソートして返す。
+  Future<List<String>> expenseNames(int year, int month) async {
+    final summaries = await getExpenseSummaries(year, month);
+
+    summaries.sort((a, b) => b.amount.compareTo(a.amount));
+
+    return summaries
+        .map(
+          (e) => e.name,
+        )
+        .toList();
+  }
+
   Future<List<ExpenseSummary>> getExpenseSummaries(int year, int month) async {
     final Map<String, ExpenseSummary> summaryMap = {};
     final List<Map<String, dynamic>> expenses = await _db.query(
