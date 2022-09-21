@@ -1,5 +1,5 @@
 import 'package:bd/utility/int_extension.dart';
-import 'package:bd/riverpods/expense_summary_provider.dart';
+import 'package:bd/riverpods/expense_summaries_provider.dart';
 import 'package:bd/riverpods/toggle_state_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,135 +33,142 @@ class HomeTabView extends ConsumerWidget {
   final int year;
   final int month;
 
-  _handleSummaryCardTap(
-    BuildContext context,
-    ExpenseSummary summary,
-    String heroTag,
-  ) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-          opaque: false,
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, Animation<double> animation, ___) {
-            return FadeTransition(
-              opacity: animation,
-              child: Detail(
-                summary: summary,
-                heroTag: heroTag,
-              ),
-            );
-          }),
-    );
-  }
-
-  Widget summaryCard(
-    BuildContext context,
-    ExpenseSummary summary,
-    EdgeInsets margin,
-  ) {
-    final String heroTag =
-        '${summary.year}${summary.month}${summary.name}${DateTime.now().hashCode}';
-    return Hero(
-      tag: heroTag,
-      child: Material(
-        type: MaterialType.transparency,
-        child: GestureDetector(
-          onTap: () {
-            _handleSummaryCardTap(
-              context,
-              summary,
-              heroTag,
-            );
-          },
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            elevation: 4,
-            margin: margin,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      summary.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      summary.amount.toPriceString(),
-                      style: const TextStyle(
-                        fontSize: 32,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  // 予算
-                  // Container(
-                  //   alignment: Alignment.centerLeft,
-                  //   child: const Text(
-                  //     'Budget',
-                  //     style: TextStyle(
-                  //       fontSize: 10,
-                  //       color: Colors.black45,
-                  //     ),
-                  //   ),
-                  // ),
-                  // Container(
-                  //   alignment: Alignment.centerRight,
-                  //   child: Text(
-                  //     summary.amount.toString(),
-                  //     style: const TextStyle(
-                  //       fontSize: 14,
-                  //       color: Colors.black45,
-                  //     ),
-                  //   ),
-                  // ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'Last Month',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      summary.amount.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showAllRecurring = ref.watch(showAllRecurringProvider);
     final showAllTemporary = ref.watch(showAllTemporaryProvider);
-    final targetExpeseProvider = expenseSummaryProvider(Tuple2(year, month));
+    final targetExpeseProvider = expenseSummariesProvider(Tuple2(year, month));
     final summaries = ref.watch(targetExpeseProvider);
+
+    handleSummaryCardTap(
+      BuildContext context,
+      ExpenseSummary summary,
+      String heroTag,
+    ) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+            opaque: false,
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (_, Animation<double> animation, ___) {
+              return FadeTransition(
+                opacity: animation,
+                child: Detail(
+                  year: year,
+                  month: month,
+                  summaryName: summary.name,
+                  heroTag: heroTag,
+                ),
+              );
+            }),
+      ).then((value) {
+        // Wait for animation
+        Future.delayed(const Duration(milliseconds: 300)).then(
+          (value) => ref.refresh(targetExpeseProvider),
+        );
+      });
+    }
+
+    Widget summaryCard(
+      BuildContext context,
+      ExpenseSummary summary,
+      EdgeInsets margin,
+    ) {
+      final String heroTag =
+          '${summary.year}${summary.month}${summary.name}${DateTime.now().hashCode}';
+      return Hero(
+        tag: heroTag,
+        child: Material(
+          type: MaterialType.transparency,
+          child: GestureDetector(
+            onTap: () {
+              handleSummaryCardTap(
+                context,
+                summary,
+                heroTag,
+              );
+            },
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              elevation: 4,
+              margin: margin,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(15),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        summary.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        summary.amount.toPriceString(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    // 予算
+                    // Container(
+                    //   alignment: Alignment.centerLeft,
+                    //   child: const Text(
+                    //     'Budget',
+                    //     style: TextStyle(
+                    //       fontSize: 10,
+                    //       color: Colors.black45,
+                    //     ),
+                    //   ),
+                    // ),
+                    // Container(
+                    //   alignment: Alignment.centerRight,
+                    //   child: Text(
+                    //     summary.amount.toString(),
+                    //     style: const TextStyle(
+                    //       fontSize: 14,
+                    //       color: Colors.black45,
+                    //     ),
+                    //   ),
+                    // ),
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      child: const Text(
+                        'Last Month',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        summary.amount.toString(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     // 記録作成画面
     showNewRecordModal() {

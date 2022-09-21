@@ -125,6 +125,25 @@ class ExpenseRepository {
     return results.map((result) => Expense.fromMap(result)).toList();
   }
 
+  // `year` / `month` に作成された記録のうち、
+  // 名前が `name` に一致するものを集計して返す。
+  static Future<ExpenseSummary> summaryByYearMonthName(
+      int year, int month, String name) async {
+    final db = await database;
+    final List<Map<String, dynamic>> expenseMaps = await db.query(
+      _table,
+      where: 'year = ? AND month = ? AND name = ?',
+      whereArgs: [year, month, name],
+    );
+
+    // 集計
+    int amount = expenseMaps
+        .map((e) => e['amount'] as int)
+        .reduce((value, element) => value + element);
+
+    return ExpenseSummary(name, amount, year, month);
+  }
+
   // `year` / `month` に作成された記録を名前別に集計して返す。
   static Future<List<ExpenseSummary>> getExpenseSummaries(
       int year, int month) async {

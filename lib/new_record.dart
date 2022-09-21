@@ -22,6 +22,7 @@ class _NewRecord extends State<NewRecord> {
   List<int> _candidateAmounts = [];
   String _newRecordName = '';
   int _newRecordAmount = 0;
+  bool _expenseNameReadOnly = false;
 
   @override
   void initState() {
@@ -30,6 +31,8 @@ class _NewRecord extends State<NewRecord> {
     // 名前フィールドに初期値を設定し、金額フィールドにフォーカスを当てる。
     // 非同期で金額候補を取得する。
     if (widget.expenseName != '') {
+      _newRecordName = widget.expenseName;
+      _expenseNameReadOnly = true;
       _nameFieldController.text = widget.expenseName;
       _amountFocusNode.requestFocus();
       _fetchCandidateAmounts(widget.expenseName).then(
@@ -60,6 +63,7 @@ class _NewRecord extends State<NewRecord> {
 
   // 名前候補の取得
   Future<List<String>> _getCandidateNames() async {
+    if (_expenseNameReadOnly) return [];
     final now = DateTime.now();
     return await ExpenseRepository.expenseNames(now.year, now.month);
   }
@@ -157,6 +161,7 @@ class _NewRecord extends State<NewRecord> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
+                readOnly: _expenseNameReadOnly,
                 controller: _nameFieldController,
                 enabled: true,
                 autofocus: true,

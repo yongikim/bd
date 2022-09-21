@@ -1,59 +1,35 @@
-import 'package:bd/home_tab_view.dart';
 import 'package:bd/repository/expense_repository.dart';
+import 'package:bd/riverpods/expense_summary_provider.dart';
+import 'package:bd/riverpods/expenses_provider.dart';
 import 'package:bd/utility/int_extension.dart';
 import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 import 'model/expense.dart';
 
-class Detail extends StatefulWidget {
+class Detail extends ConsumerWidget {
   const Detail({
     Key? key,
-    required this.summary,
+    required this.year,
+    required this.month,
+    required this.summaryName,
     required this.heroTag,
   }) : super(key: key);
 
-  final ExpenseSummary summary;
+  final int year;
+  final int month;
+  final String summaryName;
   final String heroTag;
 
-  @override
-  State<Detail> createState() => _Detail();
-}
-
-class _Detail extends State<Detail> {
-  late Future<Map<int, List<Expense>>> _expenses;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _expenses = _getExpenses();
-  }
-
-  // `summary.year` / `summary.month` に作成された記録を取得
-  // TODO: 同一日付の Expense の並び順
-  //
-  //  ex.)
-  //    {
-  //      15: [Expense1, Expense2],
-  //      13: [Expense3],
-  //      12: [Expense4],
-  //    }
-  //
-  Future<Map<int, List<Expense>>> _getExpenses() async {
-    final expenses = await ExpenseRepository.findByYearMonthName(
-      widget.summary.year,
-      widget.summary.month,
-      widget.summary.name,
-    );
-
-    // `day` でグループ化
+  // `day` でグループ化
+  Map<int, List<Expense>> _groupByDay(List<Expense> expenses) {
     Map<int, List<Expense>> data = {};
     for (Expense expense in expenses) {
       data.putIfAbsent(expense.day, () => []);
       data[expense.day]!.add(expense);
     }
-
     return data;
   }
 
@@ -108,29 +84,111 @@ class _Detail extends State<Detail> {
         .toList();
   }
 
-  // 記録作成モーダル。モーダルを閉じると詳細画面に戻る。
-  void _showNewRecordModal() {
-    showModalBottomSheet<void>(
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      context: context,
-      builder: (context) => NewRecord(expenseName: widget.summary.name),
-    ).whenComplete(
-      // TODO: 詳細画面をリフレッシュ
-      // TODO: ホーム画面をリフレッシュ
-      () => setState(() {}),
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final ExpenseSummary summary = widget.summary;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     const appBarHeight = 70.0;
     const bottomBarHeight = 40 + 48;
     final safeAreaPaddingHeight = MediaQuery.of(context).padding.top;
     final containerHeight = MediaQuery.of(context).size.height -
         (appBarHeight + bottomBarHeight + safeAreaPaddingHeight);
+
+    // Provider から ExpenseSummary を取得
+    final targetSummaryProvider = expenseSummaryProvider(
+      Tuple3(
+        year,
+        month,
+        summaryName,
+      ),
+    );
+    final summary = ref.watch(targetSummaryProvider);
+
+    // Provider から Expense のリストを取得
+    final targetExpensesProvider = expensesProvider(
+      Tuple3(
+        year,
+        month,
+        summaryName,
+      ),
+    );
+    final expenses = ref.watch(targetExpensesProvider);
+
+    // 記録作成モーダル。モーダルを閉じると詳細画面に戻る。
+    showNewRecordModal() {
+      return () async {
+        await showModalBottomSheet<void>(
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          context: context,
+          builder: (context) => NewRecord(expenseName: summaryName),
+        );
+        // 詳細画面をリフレッシュ `widget.summary` と `_expenses`
+        ref.refresh(targetSummaryProvider);
+        ref.refresh(targetExpensesProvider);
+      };
+    }
+
+    Widget buildSummaryAmount() {
+      Widget widget = const Center(
+        child: CircularProgressIndicator(),
+      );
+      summary.when(
+        data: (data) {
+          widget = Text(
+            data.amount.toPriceString(),
+            style: const TextStyle(
+              fontSize: 36,
+            ),
+          );
+        },
+        error: (e, t) {
+          widget = const Center(
+            child: Text("error"),
+          );
+        },
+        loading: () {
+          widget = const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+      return widget;
+    }
+
+    Widget buildExpenseList() {
+      Widget widget = const Center(
+        child: CircularProgressIndicator(),
+      );
+      expenses.when(
+        data: (data) {
+          widget = Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: CustomScrollView(
+              shrinkWrap: true,
+              slivers: [
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    _buildDailyExpenses(_groupByDay(data)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        error: (e, t) {
+          widget = const Center(
+            child: Text("error"),
+          );
+        },
+        loading: () {
+          widget = const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+      return widget;
+    }
 
     final container = SizedBox(
       height: containerHeight,
@@ -146,43 +204,13 @@ class _Detail extends State<Detail> {
                 horizontal: 16,
                 vertical: 24,
               ),
-              child: Text(
-                summary.amount.toPriceString(),
-                style: const TextStyle(
-                  fontSize: 36,
-                ),
-              ),
+              child: buildSummaryAmount(),
             ),
           ),
           // 内訳リスト
           Expanded(
             // fit: FlexFit.loose,
-            child: FutureBuilder<Map<int, List<Expense>>>(
-              future: _expenses,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                    ),
-                    child: CustomScrollView(
-                      shrinkWrap: true,
-                      slivers: [
-                        SliverList(
-                          delegate: SliverChildListDelegate(
-                            _buildDailyExpenses(snapshot.data!),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
-            ),
+            child: buildExpenseList(),
           ),
         ],
       ),
@@ -191,7 +219,7 @@ class _Detail extends State<Detail> {
     return Scaffold(
       backgroundColor: Theme.of(context).canvasColor,
       body: Hero(
-        tag: widget.heroTag,
+        tag: heroTag,
         child: GestureDetector(
           onHorizontalDragEnd: (details) {
             Navigator.of(context).pop();
@@ -212,7 +240,7 @@ class _Detail extends State<Detail> {
                         const Spacer(),
                         // 項目の名前
                         Text(
-                          summary.name.toString(),
+                          summaryName.toString(),
                           style: TextStyle(
                             color: Theme.of(context).textTheme.overline?.color,
                             fontSize: 16,
@@ -251,9 +279,7 @@ class _Detail extends State<Detail> {
                   bottom: 32,
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    _showNewRecordModal();
-                  },
+                  onPressed: showNewRecordModal(),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     elevation: 4,

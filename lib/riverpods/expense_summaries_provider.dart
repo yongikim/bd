@@ -4,18 +4,16 @@ import 'package:tuple/tuple.dart';
 import '../repository/expense_repository.dart';
 import '../home_tab_view.dart';
 
-final expenseSummaryProvider =
-    FutureProvider.family<ExpenseSummary, Tuple3<int, int, String>>(
+final expenseSummariesProvider =
+    FutureProvider.family<List<ExpenseSummary>, Tuple2<int, int>>(
   (ref, tuple) async {
     final year = tuple.item1;
     final month = tuple.item2;
-    final name = tuple.item3;
-    final summary = await ExpenseRepository.summaryByYearMonthName(
+    final summaries = await ExpenseRepository.getExpenseSummaries(
       year,
       month,
-      name,
     );
 
-    return summary;
+    return summaries;
   },
 );
