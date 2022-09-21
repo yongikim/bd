@@ -18,6 +18,8 @@ class ExpenseRepository {
     return _instance;
   }
 
+  static final String _table = _table;
+
   static Database? _database;
   static Future<Database> get database async {
     if (_database != null) return _database!;
@@ -59,7 +61,7 @@ class ExpenseRepository {
 
   static Future<Expense> insertExpense(Expense expense) async {
     final db = await database;
-    int id = await db.insert('expense', expense.toMap());
+    int id = await db.insert(_table, expense.toMap());
     expense.id = id;
 
     return expense;
@@ -68,7 +70,7 @@ class ExpenseRepository {
   static Future<Expense> findExpenseByID(int id) async {
     final db = await database;
     List<Map<String, Object?>> records = await db.query(
-      'expense',
+      _table,
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -78,6 +80,27 @@ class ExpenseRepository {
     expense.id = id;
 
     return expense;
+  }
+
+  // `year` / `month` に作成された記録のうち、
+  // 名前が `name` に一致するものを返す
+  static Future<List<Expense>> findByYearMonthName(
+      int year, int month, String name) async {
+    final db = await database;
+
+    List<Map<String, Object?>> records = await db.query(
+      _table,
+      where: 'year = ? AND month = ? AND name = ?',
+      whereArgs: [year, month, name],
+    );
+
+    final List<Expense> expenses = records
+        .map(
+          (record) => Expense.fromMap(record),
+        )
+        .toList();
+
+    return expenses;
   }
 
   // `year` / `month` に作成された記録の名前を取得し、
@@ -99,7 +122,7 @@ class ExpenseRepository {
     final db = await database;
     final now = DateTime.now();
     final List<Map<String, dynamic>> results = await db.query(
-      'expense',
+      _table,
       where: 'name = ? AND day >= ?',
       whereArgs: [name, now.day - days],
     );
@@ -116,7 +139,7 @@ class ExpenseRepository {
       int year, int month, String name) async {
     final db = await database;
     final List<Map<String, dynamic>> expenses = await db.query(
-      'expense',
+      _table,
       where: 'year = ? AND month = ? AND name = ?',
       whereArgs: [year, month, name],
     );
@@ -135,7 +158,7 @@ class ExpenseRepository {
       int year, int month) async {
     final db = await database;
     final List<Map<String, dynamic>> expenses = await db.query(
-      'expense',
+      _table,
       where: 'year = ? AND month = ?',
       whereArgs: [year, month],
     );

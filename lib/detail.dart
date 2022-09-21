@@ -1,4 +1,5 @@
 import 'package:bd/home_tab_view.dart';
+import 'package:bd/repository/expense_repository.dart';
 import 'package:bd/utility/int_extension.dart';
 import 'package:bd/new_record.dart';
 import 'package:flutter/material.dart';
@@ -29,33 +30,40 @@ class _Detail extends State<Detail> {
     _expenses = _getExpenses();
   }
 
+  // `summary.year` / `summary.month` に作成された記録を取得
+  // TODO: 同一日付の Expense の並び順
+  //
+  //  ex.)
+  //    {
+  //      15: [Expense1, Expense2],
+  //      13: [Expense3],
+  //      12: [Expense4],
+  //    }
+  //
   Future<Map<int, List<Expense>>> _getExpenses() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    final expenses = await ExpenseRepository.findByYearMonthName(
+      widget.summary.year,
+      widget.summary.month,
+      widget.summary.name,
+    );
+
+    // `day` でグループ化
     Map<int, List<Expense>> data = {};
-    for (int i = 0; i < 15; i++) {
-      data.putIfAbsent(i, () => []);
-      data[i]!.add(
-        Expense(
-          widget.summary.name,
-          i * 10,
-          widget.summary.year,
-          widget.summary.month,
-          i + 1,
-        ),
-      );
-      data[i]!.add(
-        Expense(
-          widget.summary.name,
-          i * 10,
-          widget.summary.year,
-          widget.summary.month,
-          i + 1,
-        ),
-      );
+    for (Expense expense in expenses) {
+      data.putIfAbsent(expense.day, () => []);
+      data[expense.day]!.add(expense);
     }
+
     return data;
   }
 
+  // 取得した記録を、日付でグループ化して表示
+  //
+  // ex.) day 15  140
+  //              130
+  //      day 13  120
+  //      day 12  110
+  //
   List<Widget> _buildDailyExpenses(
     Map<int, List<Expense>> expensesMap,
   ) {
@@ -100,7 +108,7 @@ class _Detail extends State<Detail> {
         .toList();
   }
 
-  // 記録作成画面
+  // 記録作成モーダル。モーダルを閉じると詳細画面に戻る。
   void _showNewRecordModal() {
     showModalBottomSheet<void>(
       backgroundColor: Colors.transparent,
@@ -108,9 +116,9 @@ class _Detail extends State<Detail> {
       context: context,
       builder: (context) => const NewRecord(),
     ).whenComplete(
-      () => setState(() {
-        // Do Something
-      }),
+      // TODO: 詳細画面をリフレッシュ
+      // TODO: ホーム画面をリフレッシュ
+      () => setState(() {}),
     );
   }
 
