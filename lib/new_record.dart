@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'model/expense.dart';
 
 class NewRecord extends StatefulWidget {
-  const NewRecord({
-    Key? key,
-  }) : super(key: key);
+  const NewRecord({Key? key, this.expenseName = ''}) : super(key: key);
+
+  final String expenseName;
 
   @override
   State<NewRecord> createState() => _NewRecord();
@@ -26,6 +26,20 @@ class _NewRecord extends State<NewRecord> {
   @override
   void initState() {
     super.initState();
+
+    // 名前フィールドに初期値を設定し、金額フィールドにフォーカスを当てる。
+    // 非同期で金額候補を取得する。
+    if (widget.expenseName != '') {
+      _nameFieldController.text = widget.expenseName;
+      _amountFocusNode.requestFocus();
+      _fetchCandidateAmounts(widget.expenseName).then(
+        (value) => setState(
+          () {
+            _candidateAmounts = value;
+          },
+        ),
+      );
+    }
   }
 
   void _handleNewRecordNameChange(String input) {
@@ -50,6 +64,18 @@ class _NewRecord extends State<NewRecord> {
     return await ExpenseRepository.expenseNames(now.year, now.month);
   }
 
+  // 金額候補の取得。直近30日間の記録の中から、名前が `name` に一致するものを
+  // 取得し、金額順にソートして金額を返す。
+  Future<List<int>> _fetchCandidateAmounts(String name) async {
+    final expenses = await ExpenseRepository.findByNameInPastDays(name, 30);
+
+    // 重複を削除し、降順にソート
+    final amounts = expenses.map((e) => e.amount).toSet().toList();
+    amounts.sort((a, b) => b.compareTo(a));
+
+    return amounts;
+  }
+
   // 名前候補の選択
   Future<void> _handleCandidateNameClick(String name) async {
     // FIXME: 名前候補を再選択したとき金額候補の変更を反映するために一度フォーカスを外す
@@ -62,12 +88,8 @@ class _NewRecord extends State<NewRecord> {
     });
     _nameFieldController.text = name;
 
-    // 金額候補の取得
-    final expenses = await ExpenseRepository.findByNameInPastDays(name, 30);
-    // 重複を削除し、降順にソート
-    final amounts = expenses.map((e) => e.amount).toSet().toList();
-    amounts.sort((a, b) => b.compareTo(a));
-
+    // 金額候補の選択
+    final amounts = await _fetchCandidateAmounts(name);
     setState(() {
       _candidateAmounts = amounts;
     });

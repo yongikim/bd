@@ -114,7 +114,7 @@ class _Detail extends State<Detail> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       context: context,
-      builder: (context) => const NewRecord(),
+      builder: (context) => NewRecord(expenseName: widget.summary.name),
     ).whenComplete(
       // TODO: 詳細画面をリフレッシュ
       // TODO: ホーム画面をリフレッシュ
