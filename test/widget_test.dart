@@ -21,10 +21,9 @@ void main() async {
       9,
       3,
     );
-    Expense insertedExpense = await ExpenseRepository.insertExpense(expense);
+    Expense insertedExpense = await ExpenseRepository.insert(expense);
 
-    Expense readExpense =
-        await ExpenseRepository.findExpenseByID(insertedExpense.id!);
+    Expense readExpense = await ExpenseRepository.findByID(insertedExpense.id!);
 
     expect(insertedExpense, readExpense);
 

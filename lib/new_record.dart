@@ -97,7 +97,7 @@ class _NewRecord extends State<NewRecord> {
       now.day,
     );
 
-    await ExpenseRepository.insertExpense(expense);
+    await ExpenseRepository.insert(expense);
   }
 
   @override

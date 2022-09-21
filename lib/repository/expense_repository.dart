@@ -18,13 +18,15 @@ class ExpenseRepository {
     return _instance;
   }
 
-  static final String _table = _table;
+  static const String _table = 'expense';
 
   static Database? _database;
   static Future<Database> get database async {
     if (_database != null) return _database!;
+
     // lazily instantate the db the first time it is accessed
     _database = await _connectToDatabase();
+
     return _database!;
   }
 
@@ -59,7 +61,7 @@ class ExpenseRepository {
     deleteDatabase(await databasePath);
   }
 
-  static Future<Expense> insertExpense(Expense expense) async {
+  static Future<Expense> insert(Expense expense) async {
     final db = await database;
     int id = await db.insert(_table, expense.toMap());
     expense.id = id;
@@ -67,7 +69,7 @@ class ExpenseRepository {
     return expense;
   }
 
-  static Future<Expense> findExpenseByID(int id) async {
+  static Future<Expense> findByID(int id) async {
     final db = await database;
     List<Map<String, Object?>> records = await db.query(
       _table,
@@ -94,13 +96,7 @@ class ExpenseRepository {
       whereArgs: [year, month, name],
     );
 
-    final List<Expense> expenses = records
-        .map(
-          (record) => Expense.fromMap(record),
-        )
-        .toList();
-
-    return expenses;
+    return records.map((record) => Expense.fromMap(record)).toList();
   }
 
   // `year` / `month` に作成された記録の名前を取得し、
@@ -110,9 +106,8 @@ class ExpenseRepository {
 
     // 金額順で昇順にソート
     summaries.sort((a, b) => b.amount.compareTo(a.amount));
-    final names = summaries.map((e) => e.name).toList();
 
-    return names;
+    return summaries.map((summary) => summary.name).toList();
   }
 
   // 過去 `days` 日間に作成された記録のうち、
@@ -127,30 +122,7 @@ class ExpenseRepository {
       whereArgs: [name, now.day - days],
     );
 
-    final expenses = results.map((e) => Expense.fromMap(e)).toList();
-
-    return expenses;
-  }
-
-  // `year` / `month に作成された記録のうち、
-  // 名前が `name` に一致する記録の金額を昇順にソートして返す。
-  // ただし、重複は削除する。
-  static Future<List<int>> amountsByYearMonthName(
-      int year, int month, String name) async {
-    final db = await database;
-    final List<Map<String, dynamic>> expenses = await db.query(
-      _table,
-      where: 'year = ? AND month = ? AND name = ?',
-      whereArgs: [year, month, name],
-    );
-
-    // 重複のないリスト
-    final amounts = expenses.map((e) => e['amount'] as int).toSet().toList();
-
-    // 降順
-    amounts.sort((a, b) => b.compareTo(a));
-
-    return amounts;
+    return results.map((result) => Expense.fromMap(result)).toList();
   }
 
   // `year` / `month` に作成された記録を名前別に集計して返す。
