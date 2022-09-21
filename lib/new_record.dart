@@ -46,10 +46,8 @@ class _NewRecord extends State<NewRecord> {
 
   // 名前候補の取得
   Future<List<String>> _getCandidateNames() async {
-    final repo = ExpenseRepository();
-    await repo.init();
     final now = DateTime.now();
-    return await repo.expenseNames(now.year, now.month);
+    return await ExpenseRepository.expenseNames(now.year, now.month);
   }
 
   // 名前候補の選択
@@ -65,9 +63,7 @@ class _NewRecord extends State<NewRecord> {
     _nameFieldController.text = name;
 
     // 金額候補の取得
-    final repo = ExpenseRepository();
-    await repo.init();
-    final expenses = await repo.findByNameInPastDays(name, 30);
+    final expenses = await ExpenseRepository.findByNameInPastDays(name, 30);
     // 重複を削除し、降順にソート
     final amounts = expenses.map((e) => e.amount).toSet().toList();
     amounts.sort((a, b) => b.compareTo(a));
@@ -91,9 +87,6 @@ class _NewRecord extends State<NewRecord> {
 
   // 記録作成ハンドラ
   Future<void> _handleNewRecordSubmit() async {
-    ExpenseRepository repo = ExpenseRepository();
-    await repo.init();
-
     final now = DateTime.now();
 
     final Expense expense = Expense(
@@ -104,7 +97,7 @@ class _NewRecord extends State<NewRecord> {
       now.day,
     );
 
-    await repo.insertExpense(expense);
+    await ExpenseRepository.insertExpense(expense);
   }
 
   @override

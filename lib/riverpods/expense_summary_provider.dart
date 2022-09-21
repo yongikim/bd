@@ -7,12 +7,9 @@ import '../home_tab_view.dart';
 final expenseSummaryProvider =
     FutureProvider.family<List<ExpenseSummary>, Tuple2<int, int>>(
   (ref, tuple) async {
-    final repository = ExpenseRepository();
-    await repository.init();
-
     final year = tuple.item1;
     final month = tuple.item2;
-    final summaries = await repository.getExpenseSummaries(
+    final summaries = await ExpenseRepository.getExpenseSummaries(
       year,
       month,
     );

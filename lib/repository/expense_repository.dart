@@ -5,21 +5,37 @@ import 'package:sqflite/sqflite.dart';
 import '../home_tab_view.dart';
 
 class ExpenseRepository {
-  ExpenseRepository();
+  // TODO: DBを引数として受け取り、テスト可能な実装にする。
+  // sqflite は `flutter test` に対応していない。
 
-  late Database _db;
-  late String _dbPath;
-
-  Future init({String dbName = "dev1"}) async {
-    _db = await _getDatabase(dbName);
+  // Make this singleton class
+  // クラスのスタティックメンバとしてインスタンスのキャッシュを保持
+  static final ExpenseRepository _instance = ExpenseRepository._internal();
+  // コンストラクタへのアクセスを制限 (デフォルトのコンストラクタをプライベート化)
+  ExpenseRepository._internal();
+  // インスタンスのキャッシュを返すメソッド
+  factory ExpenseRepository() {
+    return _instance;
   }
 
-  Future<Database> _getDatabase(String dbName) async {
+  static Database? _database;
+  static Future<Database> get database async {
+    if (_database != null) return _database!;
+    // lazily instantate the db the first time it is accessed
+    _database = await _connectToDatabase();
+    return _database!;
+  }
+
+  static Future<String> get databasePath async {
     String dbPath = await getDatabasesPath();
-    dbPath += '$dbName.db';
-    _dbPath = dbPath;
+    String dbName = 'dev1.db';
+    return join(dbPath, dbName);
+  }
+
+  static Future<Database> _connectToDatabase() async {
+    final String dbPath = await databasePath;
     return openDatabase(
-      _dbPath,
+      dbPath,
       version: 1,
       onCreate: (Database newDB, int version) {
         newDB.execute("""
@@ -37,28 +53,36 @@ class ExpenseRepository {
     );
   }
 
-  deleteCurrentDB() {
-    deleteDatabase(_dbPath);
+  static Future deleteCurrentDB() async {
+    deleteDatabase(await databasePath);
   }
 
-  Future<Expense> insertExpense(Expense expense) async {
-    int id = await _db.insert('expense', expense.toMap());
+  static Future<Expense> insertExpense(Expense expense) async {
+    final db = await database;
+    int id = await db.insert('expense', expense.toMap());
     expense.id = id;
+
     return expense;
   }
 
-  Future<Expense> findExpenseByID(int id) async {
-    List<Map<String, Object?>> records =
-        await _db.query('expense', where: 'id = ?', whereArgs: [id]);
+  static Future<Expense> findExpenseByID(int id) async {
+    final db = await database;
+    List<Map<String, Object?>> records = await db.query(
+      'expense',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
     Map<String, Object?> mapRead = records.first;
     final Expense expense = Expense.fromMap(mapRead);
     expense.id = id;
+
     return expense;
   }
 
   // `year` / `month` に作成された記録の名前を取得し、
   // 金額で降順にソートして返す。
-  Future<List<String>> expenseNames(int year, int month) async {
+  static Future<List<String>> expenseNames(int year, int month) async {
     final summaries = await getExpenseSummaries(year, month);
 
     // 金額順で昇順にソート
@@ -70,9 +94,11 @@ class ExpenseRepository {
 
   // 過去 `days` 日間に作成された記録のうち、
   // 名前が `name` に一致する記録を返す。
-  Future<List<Expense>> findByNameInPastDays(String name, int days) async {
+  static Future<List<Expense>> findByNameInPastDays(
+      String name, int days) async {
+    final db = await database;
     final now = DateTime.now();
-    final List<Map<String, dynamic>> results = await _db.query(
+    final List<Map<String, dynamic>> results = await db.query(
       'expense',
       where: 'name = ? AND day >= ?',
       whereArgs: [name, now.day - days],
@@ -86,9 +112,10 @@ class ExpenseRepository {
   // `year` / `month に作成された記録のうち、
   // 名前が `name` に一致する記録の金額を昇順にソートして返す。
   // ただし、重複は削除する。
-  Future<List<int>> amountsByYearMonthName(
+  static Future<List<int>> amountsByYearMonthName(
       int year, int month, String name) async {
-    final List<Map<String, dynamic>> expenses = await _db.query(
+    final db = await database;
+    final List<Map<String, dynamic>> expenses = await db.query(
       'expense',
       where: 'year = ? AND month = ? AND name = ?',
       whereArgs: [year, month, name],
@@ -103,27 +130,29 @@ class ExpenseRepository {
     return amounts;
   }
 
-  Future<List<ExpenseSummary>> getExpenseSummaries(int year, int month) async {
-    final Map<String, ExpenseSummary> summaryMap = {};
-    final List<Map<String, dynamic>> expenses = await _db.query(
+  // `year` / `month` に作成された記録を名前別に集計して返す。
+  static Future<List<ExpenseSummary>> getExpenseSummaries(
+      int year, int month) async {
+    final db = await database;
+    final List<Map<String, dynamic>> expenses = await db.query(
       'expense',
       where: 'year = ? AND month = ?',
       whereArgs: [year, month],
     );
 
+    // 名前別に集計
+    final Map<String, ExpenseSummary> summaryMap = {};
     for (var expense in expenses) {
       ExpenseSummary? summary = summaryMap[expense['name']];
       if (summary == null) {
-        summary = ExpenseSummary(
+        summaryMap[expense['name']] = ExpenseSummary(
           expense['name'],
           expense['amount'],
           expense['year'],
           expense['month'],
         );
-        summaryMap[expense['name']] = summary;
       } else {
-        final int amount = expense['amount'];
-        summary.amount += amount;
+        summary.amount += expense['amount'] as int;
         summary.recurring = true;
       }
     }

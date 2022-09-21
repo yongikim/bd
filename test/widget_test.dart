@@ -12,10 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // FIXME: sqlflite は `flutter test` に対応していない。
   test('Expense create test', () async {
-    final ExpenseRepository repo = ExpenseRepository();
-    await repo.init(dbName: "test");
-
     Expense expense = Expense(
       "test",
       100,
@@ -23,12 +21,13 @@ void main() async {
       9,
       3,
     );
-    Expense insertedExpense = await repo.insertExpense(expense);
+    Expense insertedExpense = await ExpenseRepository.insertExpense(expense);
 
-    Expense readExpense = await repo.findExpenseByID(insertedExpense.id!);
+    Expense readExpense =
+        await ExpenseRepository.findExpenseByID(insertedExpense.id!);
 
     expect(insertedExpense, readExpense);
 
-    repo.deleteCurrentDB();
+    ExpenseRepository.deleteCurrentDB();
   });
 }
