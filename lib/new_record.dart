@@ -1,19 +1,22 @@
 import 'package:bd/repository/expense_repository.dart';
+import 'package:bd/riverpods/expenses_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 import 'model/expense.dart';
 
-class NewRecord extends StatefulWidget {
+class NewRecord extends ConsumerStatefulWidget {
   const NewRecord({Key? key, this.expenseName = ''}) : super(key: key);
 
   final String expenseName;
 
   @override
-  State<NewRecord> createState() => _NewRecord();
+  NewRecordState createState() => NewRecordState();
 }
 
-class _NewRecord extends State<NewRecord> {
+class NewRecordState extends ConsumerState<NewRecord> {
   bool get _newRecordSubmittable =>
       _newRecordName != '' && _newRecordAmount > 0;
   final _nameFieldController = TextEditingController();
@@ -296,6 +299,18 @@ class _NewRecord extends State<NewRecord> {
                   await _handleNewRecordSubmit();
                   if (!mounted) return;
                   Navigator.pop(context);
+
+                  // 詳細画面の更新
+                  final now = DateTime.now();
+                  ref.refresh(
+                    expensesProvider(
+                      Tuple3(
+                        now.year,
+                        now.month,
+                        _newRecordName,
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),

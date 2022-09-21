@@ -1,3 +1,4 @@
+import 'package:bd/riverpods/expenses_provider.dart';
 import 'package:bd/utility/int_extension.dart';
 import 'package:bd/riverpods/expense_summaries_provider.dart';
 import 'package:bd/riverpods/toggle_state_provider.dart';
@@ -37,8 +38,8 @@ class HomeTabView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showAllRecurring = ref.watch(showAllRecurringProvider);
     final showAllTemporary = ref.watch(showAllTemporaryProvider);
-    final targetExpeseProvider = expenseSummariesProvider(Tuple2(year, month));
-    final summaries = ref.watch(targetExpeseProvider);
+    final targetExpenseProvider = expenseSummariesProvider(Tuple2(year, month));
+    final summaries = ref.watch(targetExpenseProvider);
 
     handleSummaryCardTap(
       BuildContext context,
@@ -64,7 +65,7 @@ class HomeTabView extends ConsumerWidget {
       ).then((value) {
         // Wait for animation
         Future.delayed(const Duration(milliseconds: 300)).then(
-          (value) => ref.refresh(targetExpeseProvider),
+          (value) => ref.refresh(targetExpenseProvider),
         );
       });
     }
@@ -179,7 +180,7 @@ class HomeTabView extends ConsumerWidget {
           context: context,
           builder: (BuildContext context) => const NewRecord(),
         );
-        ref.refresh(targetExpeseProvider);
+        ref.refresh(targetExpenseProvider);
       };
     }
 
